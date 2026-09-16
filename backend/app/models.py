@@ -193,3 +193,34 @@ class MovieCredit(Base):
         "Person",
         back_populates="movie_credits"
     )
+
+class WatchlistItem(Base):
+    __tablename__ = "watchlist_items"
+
+    id = Column(
+        BigInteger,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    movie_id = Column(
+        BigInteger,
+        ForeignKey("movies.id"),
+        nullable=True
+    )
+
+    tv_show_id = Column(
+        BigInteger,
+        nullable=True
+    )
+
+    added_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )

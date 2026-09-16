@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.routers import users
+from app.routers import watchlist
 
 from app.database import engine
 from app.routers import movies
@@ -16,6 +17,7 @@ app = FastAPI(
 
 app.include_router(movies.router)
 app.include_router(users.router)
+app.include_router(watchlist.router)
 
 
 @app.get("/")
