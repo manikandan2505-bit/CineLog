@@ -41,6 +41,38 @@ class MovieCreditResponse(BaseModel):
 
     person: PersonResponse
 
+class UserCreate(BaseModel):
+
+    username: str
+    email: str
+    password: str
+
+    display_name: str | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
+
+class UserLogin(BaseModel):
+
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+    id: int
+    username: str
+    email: str
+
+    display_name: str | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
+
+    created_at: datetime
+    updated_at: datetime
 
 class MovieResponse(BaseModel):
 

@@ -15,6 +15,42 @@ from sqlalchemy.sql import func
 
 from app.database import Base
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    username = Column(
+        String(50),
+        unique=True,
+        nullable=False
+    )
+
+    email = Column(
+        String(255),
+        unique=True,
+        nullable=False
+    )
+
+    password_hash = Column(
+        String(255),
+        nullable=False
+    )
+
+    display_name = Column(String(100))
+    bio = Column(Text)
+    avatar_url = Column(String(500))
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
 
 class Movie(Base):
     __tablename__ = "movies"
