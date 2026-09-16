@@ -107,3 +107,21 @@ class MovieResponse(BaseModel):
 
     genres: list[GenreResponse] = []
     credits: list[MovieCreditResponse] = []
+
+class MovieRatingCreate(BaseModel):
+
+    rating: float
+
+
+class MovieRatingResponse(BaseModel):
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+    id: int
+    user_id: int
+    movie_id: int
+    rating: float
+    created_at: datetime
+    updated_at: datetime
