@@ -125,3 +125,33 @@ class MovieRatingResponse(BaseModel):
     rating: float
     created_at: datetime
     updated_at: datetime
+
+class DiaryEntryCreate(BaseModel):
+    watched_at: datetime
+    rating: float | None = None
+    review: str | None = None
+    notes: str | None = None
+    rewatch: bool = False
+
+
+class DiaryEntryUpdate(BaseModel):
+    watched_at: datetime | None = None
+    rating: float | None = None
+    review: str | None = None
+    notes: str | None = None
+    rewatch: bool | None = None
+
+
+class DiaryEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    movie_id: int
+    watched_at: datetime
+    rating: float | None = None
+    review: str | None = None
+    notes: str | None = None
+    rewatch: bool
+    created_at: datetime
+    updated_at: datetime

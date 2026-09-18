@@ -4,6 +4,7 @@ from sqlalchemy import text
 from app.routers import users
 from app.routers import watchlist
 from app.routers import ratings
+from app.routers import diary
 
 from app.database import engine
 from app.routers import movies
@@ -20,6 +21,7 @@ app.include_router(movies.router)
 app.include_router(users.router)
 app.include_router(watchlist.router)
 app.include_router(ratings.router)
+app.include_router(diary.router)
 
 
 @app.get("/")

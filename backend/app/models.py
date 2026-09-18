@@ -5,11 +5,14 @@ from sqlalchemy import (
     String,
     Text,
     Date,
+    DateTime,
     SmallInteger,
     Numeric,
     TIMESTAMP,
     ForeignKey,
+    Boolean,
 )
+
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -260,4 +263,72 @@ class MovieRating(Base):
         TIMESTAMP,
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp()
+    )
+
+class DiaryEntry(Base):
+    __tablename__ = "diary_entries"
+
+    id = Column(
+        BigInteger,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    movie_id = Column(
+        BigInteger,
+        ForeignKey("movies.id"),
+        nullable=True
+    )
+
+    episode_id = Column(
+        BigInteger,
+        nullable=True
+    )
+
+    watched_at = Column(
+        DateTime,
+        nullable=False
+    )
+
+    notes = Column(
+        Text,
+        nullable=True
+    )
+
+    rewatch = Column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
+    rating = Column(
+        Numeric(2, 1),
+        nullable=True
+    )
+
+    review = Column(
+        Text,
+        nullable=True
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    movie = relationship(
+        "Movie",
+        backref="diary_entries"
     )
