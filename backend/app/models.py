@@ -102,6 +102,171 @@ class Movie(Base):
         back_populates="movie"
     )
 
+    movie_reviews = relationship(
+        "MovieReview",
+        back_populates="movie",
+        cascade="all, delete-orphan"
+    )
+
+    favorites = relationship(
+        "Favorite",
+        back_populates="movie",
+        cascade="all, delete-orphan"
+    )
+
+class TVShow(Base):
+    __tablename__ = "tv_shows"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    tmdb_id = Column(Integer, unique=True, nullable=False)
+
+    name = Column(String(255), nullable=False)
+    original_name = Column(String(255))
+    overview = Column(Text)
+
+    first_air_date = Column(Date)
+    last_air_date = Column(Date)
+
+    original_language = Column(String(10))
+
+    poster_path = Column(String(500))
+    backdrop_path = Column(String(500))
+
+    vote_average = Column(Numeric(4, 2))
+    vote_count = Column(Integer, default=0)
+    popularity = Column(Numeric(12, 4))
+
+    status = Column(String(50))
+
+    number_of_seasons = Column(SmallInteger, default=0)
+    number_of_episodes = Column(Integer, default=0)
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    seasons = relationship(
+        "Season",
+        back_populates="tv_show"
+    )
+
+    show_ratings = relationship(
+        "ShowRating",
+        back_populates="tv_show",
+        cascade="all, delete-orphan"
+    )
+
+    show_reviews = relationship(
+        "ShowReview",
+        back_populates="tv_show",
+        cascade="all, delete-orphan"
+    )
+
+    favorites = relationship(
+        "Favorite",
+        back_populates="tv_show",
+        cascade="all, delete-orphan"
+    )
+
+class Season(Base):
+    __tablename__ = "seasons"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    tv_show_id = Column(
+        BigInteger,
+        ForeignKey("tv_shows.id"),
+        nullable=False
+    )
+
+    tmdb_id = Column(Integer, unique=True, nullable=False)
+
+    season_number = Column(SmallInteger, nullable=False)
+
+    name = Column(String(255))
+    overview = Column(Text)
+
+    air_date = Column(Date)
+    poster_path = Column(String(500))
+
+    episode_count = Column(
+        SmallInteger,
+        default=0
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    tv_show = relationship(
+        "TVShow",
+        back_populates="seasons"
+    )
+
+    episodes = relationship(
+        "Episode",
+        back_populates="season"
+    )
+
+class Episode(Base):
+    __tablename__ = "episodes"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    season_id = Column(
+        BigInteger,
+        ForeignKey("seasons.id"),
+        nullable=False
+    )
+
+    tmdb_id = Column(Integer, unique=True, nullable=False)
+
+    episode_number = Column(
+        SmallInteger,
+        nullable=False
+    )
+
+    name = Column(String(255), nullable=False)
+    overview = Column(Text)
+
+    air_date = Column(Date)
+    runtime = Column(SmallInteger)
+
+    still_path = Column(String(500))
+
+    vote_average = Column(Numeric(4, 2))
+    vote_count = Column(Integer, default=0)
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    season = relationship(
+        "Season",
+        back_populates="episodes"
+    )
 
 class Genre(Base):
     __tablename__ = "genres"
@@ -265,6 +430,8 @@ class MovieRating(Base):
         onupdate=func.current_timestamp()
     )
 
+    movie = relationship("Movie")
+
 class DiaryEntry(Base):
     __tablename__ = "diary_entries"
 
@@ -288,6 +455,7 @@ class DiaryEntry(Base):
 
     episode_id = Column(
         BigInteger,
+        ForeignKey("episodes.id"),
         nullable=True
     )
 
@@ -331,4 +499,226 @@ class DiaryEntry(Base):
     movie = relationship(
         "Movie",
         backref="diary_entries"
+    )
+
+    episode = relationship(
+        "Episode",
+        backref="diary_entries"
+    )
+
+    user = relationship("User")
+
+class ShowRating(Base):
+    __tablename__ = "show_ratings"
+
+    id = Column(
+        BigInteger,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    tv_show_id = Column(
+        BigInteger,
+        ForeignKey("tv_shows.id"),
+        nullable=False
+    )
+
+    rating = Column(
+        Numeric(2, 1),
+        nullable=False
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    tv_show = relationship(
+        "TVShow",
+        back_populates="show_ratings"
+    )
+
+
+class ShowReview(Base):
+    __tablename__ = "show_reviews"
+
+    id = Column(
+        BigInteger,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    tv_show_id = Column(
+        BigInteger,
+        ForeignKey("tv_shows.id"),
+        nullable=False
+    )
+
+    review_text = Column(
+        Text,
+        nullable=False
+    )
+
+    contains_spoilers = Column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    tv_show = relationship(
+        "TVShow",
+        back_populates="show_reviews"
+    )
+
+class MovieReview(Base):
+    __tablename__ = "movie_reviews"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    movie_id = Column(
+        BigInteger,
+        ForeignKey("movies.id"),
+        nullable=False
+    )
+
+    review_text = Column(
+        Text,
+        nullable=False
+    )
+
+    contains_spoilers = Column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+
+    movie = relationship(
+        "Movie",
+        back_populates="movie_reviews"
+    )
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    movie_id = Column(
+        BigInteger,
+        ForeignKey("movies.id"),
+        nullable=True
+    )
+
+    tv_show_id = Column(
+        BigInteger,
+        ForeignKey("tv_shows.id"),
+        nullable=True
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp()
+    )
+
+    movie = relationship(
+        "Movie",
+        back_populates="favorites"
+    )
+
+    tv_show = relationship(
+        "TVShow",
+        back_populates="favorites"
+    )
+
+
+class UserFollow(Base):
+    __tablename__ = "user_follows"
+
+    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+
+    follower_id = Column(
+        BigInteger,
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+            onupdate="CASCADE"
+        ),
+        nullable=False
+    )
+
+    following_id = Column(
+        BigInteger,
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+            onupdate="CASCADE"
+        ),
+        nullable=False
+    )
+
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        nullable=False
+    )
+
+    follower = relationship(
+        "User",
+        foreign_keys=[follower_id]
+    )
+
+    following = relationship(
+        "User",
+        foreign_keys=[following_id]
     )

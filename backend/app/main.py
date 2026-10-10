@@ -3,11 +3,16 @@ from sqlalchemy import text
 
 from app.routers import users
 from app.routers import watchlist
-from app.routers import ratings
 from app.routers import diary
+from app.routers import tv_shows
+from app.routers import favorites
+from app.routers import follows
+from app.routers import activity
 
 from app.database import engine
 from app.routers import movies
+from app.routers import ratings
+from app.routers import reviews
 
 
 app = FastAPI(
@@ -20,9 +25,13 @@ app = FastAPI(
 app.include_router(movies.router)
 app.include_router(users.router)
 app.include_router(watchlist.router)
-app.include_router(ratings.router)
 app.include_router(diary.router)
-
+app.include_router(tv_shows.router)
+app.include_router(ratings.router)
+app.include_router(reviews.router)
+app.include_router(favorites.router)
+app.include_router(follows.router)
+app.include_router(activity.router)
 
 @app.get("/")
 def root():

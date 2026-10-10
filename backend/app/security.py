@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from dotenv import load_dotenv
-from jose import jwt
+from jose import jwt,JWTError
 from pwdlib import PasswordHash
 
 
@@ -94,3 +94,37 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/users/login",
+    auto_error=False
+)
+
+
+def get_optional_current_user(
+    token: str | None = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
+):
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM]
+        )
+
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+
+        user = db.query(User).filter(
+            User.id == int(user_id)
+        ).first()
+
+        return user
+
+    except (JWTError, ValueError, TypeError):
+        return None
