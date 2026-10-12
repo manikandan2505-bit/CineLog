@@ -431,6 +431,7 @@ class MovieRating(Base):
     )
 
     movie = relationship("Movie")
+    user = relationship("User")
 
 class DiaryEntry(Base):
     __tablename__ = "diary_entries"
@@ -550,6 +551,8 @@ class ShowRating(Base):
         back_populates="show_ratings"
     )
 
+    user = relationship("User")
+
 
 class ShowReview(Base):
     __tablename__ = "show_reviews"
@@ -599,6 +602,8 @@ class ShowReview(Base):
         back_populates="show_reviews"
     )
 
+    user = relationship("User")
+
 class MovieReview(Base):
     __tablename__ = "movie_reviews"
 
@@ -643,6 +648,8 @@ class MovieReview(Base):
         back_populates="movie_reviews"
     )
 
+    user = relationship("User")
+
 class Favorite(Base):
     __tablename__ = "favorites"
 
@@ -680,6 +687,8 @@ class Favorite(Base):
         "TVShow",
         back_populates="favorites"
     )
+
+    user = relationship("User")
 
 
 class UserFollow(Base):

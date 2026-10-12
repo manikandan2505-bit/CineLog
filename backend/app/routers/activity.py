@@ -18,7 +18,6 @@ from app.security import get_current_user
 router = APIRouter(prefix="/activity", tags=["Activity Feed"])
 
 
-
 @router.get("/following")
 def get_following_activity(
     limit: int = Query(default=20, ge=1, le=100),
@@ -32,10 +31,12 @@ def get_following_activity(
         .subquery()
     )
 
+    # Fetch only enough records from each source to cover the requested page.
+    fetch_limit = limit + offset
     activities = []
 
-    # 1. Diary activities
-    entries = (
+    # 1. Diary entries
+    diary_query = (
         db.query(DiaryEntry)
         .options(
             joinedload(DiaryEntry.movie),
@@ -43,15 +44,20 @@ def get_following_activity(
             joinedload(DiaryEntry.user),
         )
         .filter(DiaryEntry.user_id.in_(following_ids))
+    )
+    total_diary = diary_query.count()
+
+    entries = (
+        diary_query
+        .order_by(DiaryEntry.watched_at.desc(), DiaryEntry.id.desc())
+        .limit(fetch_limit)
         .all()
     )
 
     for entry in entries:
         item = {
             "activity_type": (
-                "movie_watched"
-                if entry.movie
-                else "episode_watched"
+                "movie_watched" if entry.movie else "episode_watched"
             ),
             "user_id": entry.user_id,
             "username": entry.user.username if entry.user else None,
@@ -59,10 +65,11 @@ def get_following_activity(
                 entry.user.display_name if entry.user else None
             ),
             "created_at": entry.watched_at,
-            "rating": entry.rating,
+            "rating": float(entry.rating) if entry.rating is not None else None,
             "notes": entry.notes,
             "rewatch": entry.rewatch,
             "movie": None,
+            "show": None,
             "episode": None,
         }
 
@@ -82,13 +89,24 @@ def get_following_activity(
 
         activities.append(item)
 
-    # 2. Movie rating activities
-    movie_ratings = (
+    # 2. Movie ratings
+    movie_rating_query = (
         db.query(MovieRating)
         .options(
             joinedload(MovieRating.movie),
+            joinedload(MovieRating.user),
         )
         .filter(MovieRating.user_id.in_(following_ids))
+    )
+    total_movie_ratings = movie_rating_query.count()
+
+    movie_ratings = (
+        movie_rating_query
+        .order_by(
+            MovieRating.updated_at.desc(),
+            MovieRating.id.desc(),
+        )
+        .limit(fetch_limit)
         .all()
     )
 
@@ -96,10 +114,9 @@ def get_following_activity(
         activities.append({
             "activity_type": "movie_rated",
             "user_id": rating.user_id,
-            "username": (
-                db.query(User.username)
-                .filter(User.id == rating.user_id)
-                .scalar()
+            "username": rating.user.username if rating.user else None,
+            "display_name": (
+                rating.user.display_name if rating.user else None
             ),
             "created_at": rating.updated_at or rating.created_at,
             "rating": float(rating.rating),
@@ -107,18 +124,27 @@ def get_following_activity(
                 "id": rating.movie.id,
                 "title": rating.movie.title,
             } if rating.movie else None,
+            "show": None,
             "episode": None,
             "notes": None,
             "rewatch": None,
         })
 
-    # 3. TV-show rating activities
-    show_ratings = (
+    # 3. TV-show ratings
+    show_rating_query = (
         db.query(ShowRating)
         .options(
             joinedload(ShowRating.tv_show),
+            joinedload(ShowRating.user),
         )
         .filter(ShowRating.user_id.in_(following_ids))
+    )
+    total_show_ratings = show_rating_query.count()
+
+    show_ratings = (
+        show_rating_query
+        .order_by(ShowRating.updated_at.desc(), ShowRating.id.desc())
+        .limit(fetch_limit)
         .all()
     )
 
@@ -126,16 +152,15 @@ def get_following_activity(
         activities.append({
             "activity_type": "show_rated",
             "user_id": rating.user_id,
-            "username": (
-                db.query(User.username)
-                .filter(User.id == rating.user_id)
-                .scalar()
+            "username": rating.user.username if rating.user else None,
+            "display_name": (
+                rating.user.display_name if rating.user else None
             ),
             "created_at": rating.updated_at or rating.created_at,
             "rating": float(rating.rating),
             "show": {
                 "id": rating.tv_show.id,
-                "name": rating.tv_show.name,
+                "title": rating.tv_show.name,
             } if rating.tv_show else None,
             "movie": None,
             "episode": None,
@@ -143,27 +168,31 @@ def get_following_activity(
             "rewatch": None,
         })
 
-    # 4. Movie review activities
-    movie_reviews = (
+    # 4. Movie reviews
+    movie_review_query = (
         db.query(MovieReview)
-        .options(joinedload(MovieReview.movie))
+        .options(
+            joinedload(MovieReview.movie),
+            joinedload(MovieReview.user),
+        )
         .filter(MovieReview.user_id.in_(following_ids))
+    )
+    total_movie_reviews = movie_review_query.count()
+
+    movie_reviews = (
+        movie_review_query
+        .order_by(MovieReview.updated_at.desc(), MovieReview.id.desc())
+        .limit(fetch_limit)
         .all()
     )
 
     for review in movie_reviews:
-        reviewer = (
-            db.query(User)
-            .filter(User.id == review.user_id)
-            .first()
-        )
-
         activities.append({
             "activity_type": "movie_reviewed",
             "user_id": review.user_id,
-            "username": reviewer.username if reviewer else None,
+            "username": review.user.username if review.user else None,
             "display_name": (
-                reviewer.display_name if reviewer else None
+                review.user.display_name if review.user else None
             ),
             "created_at": review.updated_at or review.created_at,
             "review_text": review.review_text,
@@ -179,27 +208,31 @@ def get_following_activity(
             "rewatch": None,
         })
 
-    # 5. TV-show review activities
-    show_reviews = (
+    # 5. TV-show reviews
+    show_review_query = (
         db.query(ShowReview)
-        .options(joinedload(ShowReview.tv_show))
+        .options(
+            joinedload(ShowReview.tv_show),
+            joinedload(ShowReview.user),
+        )
         .filter(ShowReview.user_id.in_(following_ids))
+    )
+    total_show_reviews = show_review_query.count()
+
+    show_reviews = (
+        show_review_query
+        .order_by(ShowReview.updated_at.desc(), ShowReview.id.desc())
+        .limit(fetch_limit)
         .all()
     )
 
     for review in show_reviews:
-        reviewer = (
-            db.query(User)
-            .filter(User.id == review.user_id)
-            .first()
-        )
-
         activities.append({
             "activity_type": "show_reviewed",
             "user_id": review.user_id,
-            "username": reviewer.username if reviewer else None,
+            "username": review.user.username if review.user else None,
             "display_name": (
-                reviewer.display_name if reviewer else None
+                review.user.display_name if review.user else None
             ),
             "created_at": review.updated_at or review.created_at,
             "review_text": review.review_text,
@@ -215,36 +248,39 @@ def get_following_activity(
             "rewatch": None,
         })
 
-    # 6. Favorite activities
-    favorites = (
+    # 6. Favorites
+    favorite_query = (
         db.query(Favorite)
         .options(
             joinedload(Favorite.movie),
             joinedload(Favorite.tv_show),
+            joinedload(Favorite.user),
         )
         .filter(Favorite.user_id.in_(following_ids))
+    )
+    total_favorites = favorite_query.count()
+
+    favorites = (
+        favorite_query
+        .order_by(Favorite.created_at.desc(), Favorite.id.desc())
+        .limit(fetch_limit)
         .all()
     )
 
     for favorite in favorites:
-        user = (
-            db.query(User)
-            .filter(User.id == favorite.user_id)
-            .first()
-        )
-
         movie = favorite.movie
         show = favorite.tv_show
 
         activities.append({
             "activity_type": (
-                "movie_favorited" if movie
-                else "show_favorited"
+                "movie_favorited" if movie else "show_favorited"
             ),
             "user_id": favorite.user_id,
-            "username": user.username if user else None,
+            "username": (
+                favorite.user.username if favorite.user else None
+            ),
             "display_name": (
-                user.display_name if user else None
+                favorite.user.display_name if favorite.user else None
             ),
             "created_at": favorite.created_at,
             "movie": {
@@ -261,14 +297,21 @@ def get_following_activity(
             "rewatch": None,
         })
 
-
-    # Sort all activity types newest first, then paginate
+    # Merge the limited results, sort newest first, and paginate.
     activities.sort(
         key=lambda item: item["created_at"],
         reverse=True,
     )
 
-    total = len(activities)
+    total = (
+        total_diary
+        + total_movie_ratings
+        + total_show_ratings
+        + total_movie_reviews
+        + total_show_reviews
+        + total_favorites
+    )
+
     page = activities[offset:offset + limit]
 
     return {
