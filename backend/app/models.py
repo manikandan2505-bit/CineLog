@@ -731,3 +731,63 @@ class UserFollow(Base):
         "User",
         foreign_keys=[following_id]
     )
+
+
+class List(Base):
+    __tablename__ = "lists"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+    user_id = Column(
+        BigInteger,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+    name = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    is_public = Column(Boolean, nullable=False, default=True)
+    created_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+    )
+    updated_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+    user = relationship("User")
+    items = relationship(
+        "ListItem",
+        back_populates="list",
+        cascade="all, delete-orphan",
+    )
+
+
+class ListItem(Base):
+    __tablename__ = "list_items"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+    list_id = Column(
+        BigInteger,
+        ForeignKey("lists.id"),
+        nullable=False,
+    )
+    movie_id = Column(
+        BigInteger,
+        ForeignKey("movies.id"),
+        nullable=True,
+    )
+    tv_show_id = Column(
+        BigInteger,
+        ForeignKey("tv_shows.id"),
+        nullable=True,
+    )
+    position = Column(Integer, nullable=True)
+    added_at = Column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+    )
+
+    list = relationship("List", back_populates="items")
+    movie = relationship("Movie")
+    tv_show = relationship("TVShow")

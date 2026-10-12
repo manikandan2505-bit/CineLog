@@ -8,6 +8,7 @@ from app.routers import tv_shows
 from app.routers import favorites
 from app.routers import follows
 from app.routers import activity
+from app.routers import lists
 
 from app.database import engine
 from app.routers import movies
@@ -32,6 +33,7 @@ app.include_router(reviews.router)
 app.include_router(favorites.router)
 app.include_router(follows.router)
 app.include_router(activity.router)
+app.include_router(lists.router)
 
 @app.get("/")
 def root():
