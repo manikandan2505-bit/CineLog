@@ -373,13 +373,19 @@ class FavoriteResponse(BaseModel):
     created_at: datetime
 
 
+
 class UserProfileStatsResponse(BaseModel):
     total_movies_watched: int = 0
     total_movie_rewatches: int = 0
     total_episodes_watched: int = 0
     total_shows_tracked: int = 0
+
     total_movie_ratings: int = 0
     total_show_ratings: int = 0
+    average_movie_rating: float | None = None
+    average_show_rating: float | None = None
+
     total_reviews: int = 0
     total_favorites: int = 0
     total_watchlist_items: int = 0
+    total_diary_entries: int = 0
